@@ -1,6 +1,6 @@
-//! Visual Demo of CIM-Viz-Bevy
+//! Visual Demo of CIM-Domain-Bevy
 //!
-//! This demo shows how to use the cim-viz-bevy library to create
+//! This demo shows how to use the cim-domain-bevy library to create
 //! an interactive graph visualization with Bevy.
 //!
 //! Run with: cargo run --example visual_demo --features bevy/dynamic_linking
@@ -226,7 +226,7 @@ fn handle_node_creation(
         });
 
         let entity = commands.spawn((
-            // Use the bundle from cim-viz-bevy
+            // Use the bundle from cim-domain-bevy
             NodeVisualBundle::new(event.node_id, event.graph_id, event.position),
             // Add mesh for rendering
             Mesh3d(meshes.add(Sphere::new(0.5).mesh().ico(3).unwrap())),

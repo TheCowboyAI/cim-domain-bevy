@@ -1,8 +1,8 @@
-//! CIM-Viz-Bevy: A Categorical Functor for Graph Visualization
+//! CIM-Domain-Bevy: A Categorical Functor for Graph Visualization
 //!
-//! This library implements an isomorphic mapping between:
-//! - **Bevy ECS Category**: Visual entities, components, and systems
-//! - **CIM-ContextGraph Category**: Domain graph structures, nodes, and edges
+//! This library provides the isomorphic mapping between:
+//! - **Domain Category**: CIM-ContextGraph (nodes, edges, contexts)
+//! - **Visualization Category**: Bevy ECS (entities, components, systems)
 //!
 //! The functor preserves the categorical structure while enabling
 //! high-performance visualization of domain graphs in Bevy applications.

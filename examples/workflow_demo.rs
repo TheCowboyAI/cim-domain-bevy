@@ -1,14 +1,14 @@
 //! Workflow Visualization Demo
 //!
-//! This demo shows how to visualize a business workflow using cim-viz-bevy.
+//! This demo shows how to visualize a business workflow using cim-domain-bevy.
 //! It demonstrates a document approval workflow with different node types
 //! and animated state transitions.
 //!
 //! Run with: cargo run --example workflow_demo --features bevy/dynamic_linking
 
 use bevy::prelude::*;
-use cim_viz_bevy::*;
-use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
+use cim_contextgraph::{ContextGraph, NodeId, EdgeId, ContextGraphId as GraphId};
+use cim_domain_bevy::*;
 use std::collections::HashMap;
 
 fn main() {

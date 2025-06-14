@@ -1,23 +1,25 @@
-# CIM-Viz-Bevy Examples
+# CIM-Domain-Bevy Examples
 
-This directory contains demonstration examples showing how to use the cim-viz-bevy library for graph visualization in Bevy applications.
+This directory contains demonstration examples showing how to use the cim-domain-bevy library for graph visualization in Bevy applications.
 
-## Running the Examples
+## Running Examples
 
-Make sure you're in the workspace root directory, then run:
+### Visual Demo
+A comprehensive demonstration of graph visualization capabilities.
+```bash
+cargo run --example visual_demo --package cim-domain-bevy
+```
 
 ```bash
-# Basic graph visualization demo
-cargo run --example visual_demo --package cim-viz-bevy
+cargo run --example simple_demo --package cim-domain-bevy
+```
 
-# Simple minimal demo
-cargo run --example simple_demo --package cim-viz-bevy
+```bash
+cargo run --example workflow_demo --package cim-domain-bevy
+```
 
-# Workflow visualization demo (if completed)
-cargo run --example workflow_demo --package cim-viz-bevy
-
-# Usage example (shows integration pattern)
-cargo run --example usage_example --package cim-viz-bevy
+```bash
+cargo run --example usage_example --package cim-domain-bevy
 ```
 
 ## Examples Overview
@@ -87,7 +89,7 @@ If you see Vulkan validation errors, these are typically harmless warnings from 
 
 For better performance, you can enable dynamic linking:
 ```bash
-cargo run --example visual_demo --package cim-viz-bevy --features bevy/dynamic_linking
+cargo run --example visual_demo --package cim-domain-bevy --features bevy/dynamic_linking
 ```
 
 ## Key Concepts Demonstrated

@@ -1,11 +1,12 @@
-//! Simple Demo of CIM-Viz-Bevy
+//! Simple Demo of CIM-Domain-Bevy
 //!
-//! A minimal example showing how to visualize a graph with cim-viz-bevy.
+//! A minimal example showing how to visualize a graph with cim-domain-bevy.
 //!
-//! Run with: cargo run --example simple_demo --package cim-viz-bevy
+//! Run with: cargo run --example simple_demo --package cim-domain-bevy
 
 use bevy::prelude::*;
-use cim_viz_bevy::*;
+use cim_contextgraph::ContextGraph;
+use cim_domain_bevy::*;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 use std::collections::HashMap;
 

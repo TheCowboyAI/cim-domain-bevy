@@ -1,8 +1,8 @@
-# CIM-Viz-Bevy Implementation Summary
+# CIM-Domain-Bevy Implementation Summary
 
 ## Overview
 
-Successfully created `cim-viz-bevy` as a categorical functor library that provides the isomorphic mapping between:
+Successfully created `cim-domain-bevy` as a categorical functor library that provides the isomorphic mapping between:
 - **Bevy ECS** (visualization category)
 - **CIM-ContextGraph** (domain category)
 
@@ -92,9 +92,9 @@ App::new()
 - **Integration Tests**: 10 tests verifying functor properties and Bevy integration
 - All tests passing ✅
 
-## Key Decisions
+## Key Design Decisions
 
-1. **Library, not App**: cim-viz-bevy provides the functor but doesn't create a Bevy app
+1. **Library, not App**: cim-domain-bevy provides the functor but doesn't create a Bevy app
 2. **Generic over Graph Types**: Works with any N, E types in ContextGraph<N, E>
 3. **Event-First**: No direct state manipulation, everything through events
 4. **Minimal Resources**: Only read-only configuration and metrics

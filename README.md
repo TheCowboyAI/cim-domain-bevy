@@ -1,6 +1,6 @@
-# CIM-Viz-Bevy
+# CIM-Domain-Bevy
 
-A categorical functor implementation that provides the isomorphic mapping between Bevy ECS (visualization) and CIM-ContextGraph (domain) categories.
+A categorical functor library that provides isomorphic mappings between CIM domain models and Bevy ECS visualization components.
 
 ## Overview
 
@@ -65,7 +65,8 @@ This means:
 
 ```rust
 use bevy::prelude::*;
-use cim_viz_bevy::CimVizPlugin;
+use cim_domain_bevy::CimVizPlugin;
+use cim_contextgraph::ContextGraph;
 
 fn main() {
     App::new()
@@ -149,7 +150,7 @@ See `examples/usage_example.rs` for a complete example of integrating with a Bev
 The functor properties are verified through tests:
 
 ```bash
-cargo test --package cim-viz-bevy
+cargo test --package cim-domain-bevy
 ```
 
 Tests verify:

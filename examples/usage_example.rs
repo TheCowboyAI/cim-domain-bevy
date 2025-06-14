@@ -1,4 +1,4 @@
-//! Example of how to use cim-viz-bevy in a Bevy application
+//! Example of how to use cim-domain-bevy in a Bevy application
 //!
 //! This example demonstrates how a consuming Bevy app would:
 //! 1. Add the CimVizPlugin
@@ -59,7 +59,7 @@ fn handle_node_creation(
 
         // Spawn the visual representation
         commands.spawn((
-            // Use the bundle from cim-viz-bevy
+            // Use the bundle from cim-domain-bevy
             NodeVisualBundle::new(event.node_id, event.graph_id, event.position),
             // Add mesh for rendering
             Mesh3d(meshes.add(Sphere::new(0.5).mesh())),
