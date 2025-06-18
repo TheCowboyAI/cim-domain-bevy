@@ -61,9 +61,9 @@ impl AsyncSyncBridge {
 
     /// Send a domain event to the domain layer
     pub fn send_domain_event(&self, event: DomainEvent) {
-        println!("🌉 Bridge: Sending domain event to channel: {:?}", event);
+        println!("🌉 Bridge: Sending domain event to channel: {event:?}");
         if let Err(e) = self.domain_sender().send(event) {
-            eprintln!("Failed to send domain event: {:?}", e);
+            eprintln!("Failed to send domain event: {e:?}");
         }
     }
 }
@@ -78,7 +78,7 @@ pub fn process_domain_events(
         println!("🌉 Bridge: Received {} domain events from channel", events.len());
     }
     for event in events {
-        println!("  📥 Processing: {:?}", event);
+        println!("  📥 Processing: {event:?}");
         domain_events.write(event);
     }
 }
@@ -89,9 +89,9 @@ pub fn send_visualization_commands(
     bridge: Res<AsyncSyncBridge>,
 ) {
     for cmd in viz_commands.read() {
-        println!("🌉 Bridge: Sending visualization command: {:?}", cmd);
+        println!("🌉 Bridge: Sending visualization command: {cmd:?}");
         if let Err(e) = bridge.send_command(cmd.clone()) {
-            eprintln!("Failed to send visualization command: {:?}", e);
+            eprintln!("Failed to send visualization command: {e:?}");
         }
     }
 }
