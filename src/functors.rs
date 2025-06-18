@@ -7,7 +7,7 @@
 use bevy::prelude::*;
 use cim_contextgraph::{ContextGraph, NodeEntry, EdgeEntry, NodeId, ContextGraphId as GraphId};
 use crate::components::*;
-use crate::events::{DomainEvent, VisualizationCommand, EdgeRelationship, CreateNodeVisual, CreateEdgeVisual};
+use crate::events::{VisualizationCommand, EdgeRelationship, CreateNodeVisual, CreateEdgeVisual};
 
 /// Functor F: CIM-ContextGraph → Bevy ECS
 /// Maps domain objects to visual representations

@@ -22,7 +22,7 @@ pub use plugin::*;
 pub use resources::*;
 
 // Re-export bridge types selectively to avoid conflicts
-pub use bridge::{CategoricalBridge, BridgeError};
+pub use bridge::{AsyncSyncBridge, BridgeError};
 
 // Re-export functor types
 pub use functors::{DomainToVisualFunctor, VisualToDomainFunctor};

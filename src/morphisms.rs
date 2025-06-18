@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 use crate::events::*;
 
+
 /// Morphism from domain node operations to visual node operations
 pub trait NodeMorphism {
     /// Map domain node creation to visual entity spawn
@@ -18,6 +19,9 @@ pub trait NodeMorphism {
 
     /// Map domain node update to visual component update
     fn update_visual(&self, commands: &mut Commands, entity: Entity, update: NodeUpdate);
+
+    /// Remove visual representation
+    fn remove_visual(&self, entity: Entity, commands: &mut Commands);
 }
 
 /// Morphism from domain edge operations to visual edge operations
@@ -104,7 +108,7 @@ impl NodeMorphism for StandardNodeMorphism {
     }
 
     fn delete_visual(&self, commands: &mut Commands, entity: Entity) {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 
     fn update_visual(&self, commands: &mut Commands, entity: Entity, update: NodeUpdate) {
@@ -120,6 +124,10 @@ impl NodeMorphism for StandardNodeMorphism {
                 }
             }
         }
+    }
+
+    fn remove_visual(&self, entity: Entity, commands: &mut Commands) {
+        commands.entity(entity).despawn();
     }
 }
 
@@ -228,46 +236,4 @@ pub fn remove_edge_visual(
     }
 }
 
-/// System to update node positions
-pub fn update_node_position(
-    mut events: EventReader<NodePositionChanged>,
-    mut query: Query<(&crate::components::NodeVisual, &mut Transform)>,
-) {
-    for event in events.read() {
-        for (node_visual, mut transform) in query.iter_mut() {
-            if node_visual.node_id == event.node_id {
-                transform.translation = event.new_position;
-            }
-        }
-    }
-}
 
-/// System to update node metadata
-pub fn update_node_metadata(
-    mut events: EventReader<NodeMetadataChanged>,
-    mut query: Query<&mut crate::components::NodeVisual>,
-) {
-    for event in events.read() {
-        for mut node_visual in query.iter_mut() {
-            if node_visual.node_id == event.node_id {
-                // Update metadata (this would be expanded based on actual metadata structure)
-                // For now, we just acknowledge the event
-            }
-        }
-    }
-}
-
-/// System to update edge metadata
-pub fn update_edge_metadata(
-    mut events: EventReader<EdgeMetadataChanged>,
-    mut query: Query<&mut crate::components::EdgeVisual>,
-) {
-    for event in events.read() {
-        for mut edge_visual in query.iter_mut() {
-            if edge_visual.edge_id == event.edge_id {
-                // Update metadata (this would be expanded based on actual metadata structure)
-                // For now, we just acknowledge the event
-            }
-        }
-    }
-}

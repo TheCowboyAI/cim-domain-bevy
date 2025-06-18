@@ -4,7 +4,10 @@
 //! CIM-ContextGraph structures in Bevy applications.
 
 use bevy::prelude::*;
-use crate::{bridge::*, events::*, resources::*};
+use crate::events::*;
+use crate::resources::*;
+use crate::bridge::AsyncSyncBridge;
+
 
 /// The main plugin that adds all graph visualization functionality
 pub struct CimVizPlugin {
@@ -39,11 +42,11 @@ impl Plugin for CimVizPlugin {
             .add_event::<EdgeMetadataChanged>()
             .add_event::<RequestNodeCreation>()
             .add_event::<RequestEdgeCreation>()
-            .add_event::<DomainEvent>()
+            .add_event::<crate::events::DomainEvent>()
             .add_event::<VisualizationCommand>();
 
         // Add resources
-        app.insert_resource(CategoricalBridge::new(1000));
+        app.insert_resource(AsyncSyncBridge::new(1000));
 
         // Add bridge systems
         app.add_systems(
@@ -65,15 +68,7 @@ impl Plugin for CimVizPlugin {
             ),
         );
 
-        // Add update systems
-        app.add_systems(
-            Update,
-            (
-                crate::morphisms::update_node_position,
-                crate::morphisms::update_node_metadata,
-                crate::morphisms::update_edge_metadata,
-            ),
-        );
+
     }
 }
 

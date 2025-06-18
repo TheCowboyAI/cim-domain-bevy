@@ -1,12 +1,8 @@
-//! Categorical Bridge between Domain and Visual Categories
-//!
-//! This module implements the functor between the domain graph category
-//! and the visual ECS category, preserving the isomorphism between them.
+//! Bridge between domain events and Bevy ECS
 
-use crate::events::{DomainEvent, VisualizationCommand};
 use bevy::prelude::*;
-use crossbeam_channel::{bounded, Receiver, Sender};
-use std::sync::Arc;
+use crate::events::{DomainEvent, VisualizationCommand};
+use crossbeam_channel::{Receiver, Sender, bounded};
 
 /// Error types for bridge operations
 #[derive(Debug, Clone)]
@@ -17,16 +13,16 @@ pub enum BridgeError {
     ChannelFull,
 }
 
-/// The categorical bridge that handles async/sync boundary crossing
-#[derive(Resource, Clone)]
-pub struct CategoricalBridge {
+/// Bridge between async domain layer and sync Bevy ECS
+#[derive(Resource)]
+pub struct AsyncSyncBridge {
     /// Channel for domain events (domain → visual)
     domain_to_bevy: (Sender<DomainEvent>, Receiver<DomainEvent>),
     /// Channel for visualization commands (visual → domain)
     bevy_to_domain: (Sender<VisualizationCommand>, Receiver<VisualizationCommand>),
 }
 
-impl CategoricalBridge {
+impl AsyncSyncBridge {
     /// Create a new bridge with specified channel capacity
     pub fn new(capacity: usize) -> Self {
         let (domain_tx, domain_rx) = bounded(capacity);
@@ -74,7 +70,7 @@ impl CategoricalBridge {
 
 /// System that processes domain events from the async channel
 pub fn process_domain_events(
-    bridge: Res<CategoricalBridge>,
+    bridge: Res<AsyncSyncBridge>,
     mut domain_events: EventWriter<DomainEvent>,
 ) {
     let events = bridge.receive_domain_events();
@@ -90,7 +86,7 @@ pub fn process_domain_events(
 /// System that sends visualization commands to the domain
 pub fn send_visualization_commands(
     mut viz_commands: EventReader<VisualizationCommand>,
-    bridge: Res<CategoricalBridge>,
+    bridge: Res<AsyncSyncBridge>,
 ) {
     for cmd in viz_commands.read() {
         println!("🌉 Bridge: Sending visualization command: {:?}", cmd);
@@ -106,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_bridge_creation() {
-        let bridge = CategoricalBridge::new(100);
+        let bridge = AsyncSyncBridge::new(100);
 
         // Test sending domain event
         let event = DomainEvent::NodeAdded {
