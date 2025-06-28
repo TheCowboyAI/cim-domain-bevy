@@ -6,6 +6,15 @@
 
 use bevy::prelude::*;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
+use uuid::Uuid;
+
+/// Visual node ID wrapper that can be compared with domain NodeId
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct VisualNodeId(pub Uuid);
+
+/// Visual edge ID wrapper that can be compared with domain EdgeId  
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct VisualEdgeId(pub Uuid);
 use serde::{Deserialize, Serialize};
 
 // ============================================================================

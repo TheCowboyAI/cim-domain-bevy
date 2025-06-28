@@ -39,10 +39,7 @@ impl Plugin for CimVizPlugin {
             .add_event::<NodeDragEnd>()
             .add_event::<NodePositionChanged>()
             .add_event::<NodeMetadataChanged>()
-            .add_event::<EdgeMetadataChanged>()
-            .add_event::<RequestNodeCreation>()
-            .add_event::<RequestEdgeCreation>()
-            .add_event::<crate::events::DomainEvent>()
+            // Add any additional events that need to be registered
             .add_event::<VisualizationCommand>();
 
         // Add resources

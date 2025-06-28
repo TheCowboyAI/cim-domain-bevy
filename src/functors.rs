@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use cim_contextgraph::{ContextGraph, NodeEntry, EdgeEntry, NodeId, ContextGraphId as GraphId};
 use crate::components::*;
 use crate::events::{VisualizationCommand, EdgeRelationship, CreateNodeVisual, CreateEdgeVisual};
+use uuid::Uuid;
 
 /// Functor F: CIM-ContextGraph → Bevy ECS
 /// Maps domain objects to visual representations
@@ -54,40 +55,43 @@ pub struct VisualToDomainFunctor;
 impl VisualToDomainFunctor {
     /// Map node position change to domain command
     pub fn map_position_change(
-        node_id: NodeId,
+        _node_id: NodeId,
         new_position: Vec3,
-    ) -> VisualizationCommand {
-        VisualizationCommand::UpdateNodePosition {
-            graph_id: GraphId::new(), // TODO: Get from context
-            node_id,
+    ) -> CreateNodeVisual {
+        // TODO: This should be an update command, not create
+        // TODO: Need to convert NodeId to Uuid properly
+        CreateNodeVisual {
+            node_id: Uuid::new_v4(),
             position: new_position,
+            label: String::new(),
         }
     }
 
     /// Map node creation to domain command
     pub fn map_node_creation(
         position: Vec3,
-        graph_id: GraphId,
+        _graph_id: GraphId,
     ) -> VisualizationCommand {
-        VisualizationCommand::CreateNode {
-            graph_id,
+        VisualizationCommand::CreateNode(CreateNodeVisual {
+            node_id: Uuid::new_v4(),
             position,
-            metadata: None,
-        }
+            label: String::new(),
+        })
     }
 
     /// Map edge creation to domain command
     pub fn map_edge_creation(
-        source: NodeId,
-        target: NodeId,
-        graph_id: GraphId,
+        _source: NodeId,
+        _target: NodeId,
+        _graph_id: GraphId,
     ) -> VisualizationCommand {
-        VisualizationCommand::CreateEdge {
-            graph_id,
-            source,
-            target,
-            relationship: EdgeRelationship::Connected,
-        }
+        // TODO: Need to convert NodeId to Uuid properly
+        VisualizationCommand::CreateEdge(CreateEdgeVisual {
+            edge_id: Uuid::new_v4(),
+            source_node_id: Uuid::new_v4(),
+            target_node_id: Uuid::new_v4(),
+            relationship: EdgeRelationship::DependsOn, // Default relationship
+        })
     }
 }
 
@@ -131,7 +135,7 @@ impl FunctorComposition {
         node: &NodeEntry<N>,
         graph_id: GraphId,
         position: Vec3,
-    ) -> VisualizationCommand {
+    ) -> CreateNodeVisual {
         // F: Domain → Visual
         let visual = DomainToVisualFunctor::map_node(node, graph_id, position);
 

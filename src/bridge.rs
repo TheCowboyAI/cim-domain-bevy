@@ -1,7 +1,7 @@
 //! Bridge between domain events and Bevy ECS
 
 use bevy::prelude::*;
-use crate::events::{DomainEvent, VisualizationCommand};
+use crate::events::VisualizationCommand;
 use crossbeam_channel::{Receiver, Sender, bounded};
 
 /// Error types for bridge operations
@@ -16,8 +16,8 @@ pub enum BridgeError {
 /// Bridge between async domain layer and sync Bevy ECS
 #[derive(Resource)]
 pub struct AsyncSyncBridge {
-    /// Channel for domain events (domain → visual)
-    domain_to_bevy: (Sender<DomainEvent>, Receiver<DomainEvent>),
+    /// Channel for visualization commands (domain → visual)
+    domain_to_bevy: (Sender<VisualizationCommand>, Receiver<VisualizationCommand>),
     /// Channel for visualization commands (visual → domain)
     bevy_to_domain: (Sender<VisualizationCommand>, Receiver<VisualizationCommand>),
 }
@@ -34,8 +34,8 @@ impl AsyncSyncBridge {
         }
     }
 
-    /// Get sender for domain events (used by async domain layer)
-    pub fn domain_sender(&self) -> Sender<DomainEvent> {
+    /// Get sender for visualization commands (used by async domain layer)
+    pub fn domain_sender(&self) -> Sender<VisualizationCommand> {
         self.domain_to_bevy.0.clone()
     }
 
@@ -50,8 +50,8 @@ impl AsyncSyncBridge {
             .map_err(|_| BridgeError::ChannelDisconnected)
     }
 
-    /// Receive events from domain (non-blocking)
-    pub fn receive_domain_events(&self) -> Vec<DomainEvent> {
+    /// Receive visualization commands from domain (non-blocking)
+    pub fn receive_domain_events(&self) -> Vec<VisualizationCommand> {
         let mut events = Vec::new();
         while let Ok(event) = self.domain_to_bevy.1.try_recv() {
             events.push(event);
@@ -59,27 +59,27 @@ impl AsyncSyncBridge {
         events
     }
 
-    /// Send a domain event to the domain layer
-    pub fn send_domain_event(&self, event: DomainEvent) {
-        println!("🌉 Bridge: Sending domain event to channel: {event:?}");
+    /// Send a visualization command to the domain layer
+    pub fn send_domain_event(&self, event: VisualizationCommand) {
+        println!("🌉 Bridge: Sending visualization command to channel: {event:?}");
         if let Err(e) = self.domain_sender().send(event) {
-            eprintln!("Failed to send domain event: {e:?}");
+            eprintln!("Failed to send visualization command: {e:?}");
         }
     }
 }
 
-/// System that processes domain events from the async channel
+/// System that processes visualization commands from the async channel
 pub fn process_domain_events(
     bridge: Res<AsyncSyncBridge>,
-    mut domain_events: EventWriter<DomainEvent>,
+    mut viz_commands: EventWriter<VisualizationCommand>,
 ) {
     let events = bridge.receive_domain_events();
     if !events.is_empty() {
-        println!("🌉 Bridge: Received {} domain events from channel", events.len());
+        println!("🌉 Bridge: Received {} visualization commands from channel", events.len());
     }
     for event in events {
         println!("  📥 Processing: {event:?}");
-        domain_events.write(event);
+        viz_commands.write(event);
     }
 }
 
@@ -104,13 +104,12 @@ mod tests {
     fn test_bridge_creation() {
         let bridge = AsyncSyncBridge::new(100);
 
-        // Test sending domain event
-        let event = DomainEvent::NodeAdded {
-            graph_id: Default::default(),
-            node_id: Default::default(),
-            position: None,
-            metadata: serde_json::Value::Null,
-        };
+        // Test sending visualization command
+        let event = VisualizationCommand::CreateNode(crate::events::CreateNodeVisual {
+            node_id: uuid::Uuid::new_v4(),
+            position: Vec3::ZERO,
+            label: "Test".to_string(),
+        });
 
         bridge.domain_sender().send(event).unwrap();
 

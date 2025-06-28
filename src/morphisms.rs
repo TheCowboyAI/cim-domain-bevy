@@ -167,11 +167,19 @@ pub fn create_node_visual(
     mut events: EventReader<CreateNodeVisual>,
 ) {
     for event in events.read() {
-        commands.spawn(crate::components::NodeVisualBundle::new(
-            event.node_id,
-            event.graph_id,
-            event.position,
-        ));
+        // Since we can't construct NodeId from Uuid, we create a new one
+        // and also store the visual ID for mapping
+        let node_id = NodeId::new();
+        let _entity = commands.spawn((
+            crate::components::NodeVisualBundle::new(
+                node_id,
+                GraphId::new(), // TODO: Add graph_id to CreateNodeVisual event
+                event.position,
+            ),
+            crate::components::VisualNodeId(event.node_id),
+        )).id();
+        
+        // TODO: Store mapping between visual ID and domain NodeId
     }
 }
 
@@ -179,11 +187,12 @@ pub fn create_node_visual(
 pub fn remove_node_visual(
     mut commands: Commands,
     mut events: EventReader<RemoveNodeVisual>,
-    query: Query<(Entity, &crate::components::NodeVisual)>,
+    query: Query<(Entity, &crate::components::VisualNodeId)>,
 ) {
     for event in events.read() {
-        for (entity, node_visual) in query.iter() {
-            if node_visual.node_id == event.node_id {
+        // Find entities with matching visual ID
+        for (entity, visual_id) in query.iter() {
+            if visual_id.0 == event.node_id {
                 commands.entity(entity).despawn();
             }
         }
@@ -194,28 +203,32 @@ pub fn remove_node_visual(
 pub fn create_edge_visual(
     mut commands: Commands,
     mut events: EventReader<CreateEdgeVisual>,
-    nodes: Query<(Entity, &crate::components::NodeVisual)>,
+    nodes: Query<(Entity, &crate::components::VisualNodeId)>,
 ) {
     for event in events.read() {
-        // Find source and target entities
+        // Find source and target entities by visual ID
         let mut source_entity = None;
         let mut target_entity = None;
 
-        for (entity, node_visual) in nodes.iter() {
-            if node_visual.node_id == event.source_id {
+        for (entity, visual_id) in nodes.iter() {
+            if visual_id.0 == event.source_node_id {
                 source_entity = Some(entity);
             }
-            if node_visual.node_id == event.target_id {
+            if visual_id.0 == event.target_node_id {
                 target_entity = Some(entity);
             }
         }
 
         if let (Some(source), Some(target)) = (source_entity, target_entity) {
-            commands.spawn(crate::components::EdgeVisualBundle::new(
-                event.edge_id,
-                event.graph_id,
-                source,
-                target,
+            let edge_id = EdgeId::new();
+            commands.spawn((
+                crate::components::EdgeVisualBundle::new(
+                    edge_id,
+                    GraphId::new(), // TODO: Add graph_id to CreateEdgeVisual event
+                    source,
+                    target,
+                ),
+                crate::components::VisualEdgeId(event.edge_id),
             ));
         }
     }
@@ -225,11 +238,12 @@ pub fn create_edge_visual(
 pub fn remove_edge_visual(
     mut commands: Commands,
     mut events: EventReader<RemoveEdgeVisual>,
-    query: Query<(Entity, &crate::components::EdgeVisual)>,
+    query: Query<(Entity, &crate::components::VisualEdgeId)>,
 ) {
     for event in events.read() {
-        for (entity, edge_visual) in query.iter() {
-            if edge_visual.edge_id == event.edge_id {
+        // Find entities with matching visual ID
+        for (entity, visual_id) in query.iter() {
+            if visual_id.0 == event.edge_id {
                 commands.entity(entity).despawn();
             }
         }
