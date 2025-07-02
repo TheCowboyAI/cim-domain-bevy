@@ -99,6 +99,7 @@ pub fn send_visualization_commands(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cim_contextgraph::NodeId;
 
     #[test]
     fn test_bridge_creation() {

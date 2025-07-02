@@ -11,6 +11,8 @@ cim-domain = { path = "../cim-domain" }
 # Bevy for visualization - use workspace patched version
 bevy = { path = "../bevy-patched", default-features = false, features = [
     "bevy_log",
+    "bevy_color",
+    "bevy_render",
 ] }
 
 # Serialization
