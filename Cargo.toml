@@ -9,7 +9,9 @@ cim-contextgraph = { path = "../cim-contextgraph" }
 cim-domain = { path = "../cim-domain" }
 
 # Bevy for visualization - use workspace patched version
-bevy = { version = "0.16", features = ["dynamic_linking"] }
+bevy = { path = "../bevy-patched", default-features = false, features = [
+    "bevy_log",
+] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

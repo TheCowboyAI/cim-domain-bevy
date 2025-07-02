@@ -5,10 +5,9 @@
 //! - Bevy ECS Category (visual entities)
 
 use bevy::prelude::*;
-use cim_contextgraph::{ContextGraph, NodeEntry, EdgeEntry, NodeId, ContextGraphId as GraphId};
+use cim_contextgraph::{ContextGraph, NodeEntry, EdgeEntry, NodeId, EdgeId, ContextGraphId as GraphId};
 use crate::components::*;
 use crate::events::{VisualizationCommand, EdgeRelationship, CreateNodeVisual, CreateEdgeVisual};
-use uuid::Uuid;
 
 /// Functor F: CIM-ContextGraph → Bevy ECS
 /// Maps domain objects to visual representations
@@ -55,13 +54,12 @@ pub struct VisualToDomainFunctor;
 impl VisualToDomainFunctor {
     /// Map node position change to domain command
     pub fn map_position_change(
-        _node_id: NodeId,
+        node_id: NodeId,
         new_position: Vec3,
     ) -> CreateNodeVisual {
         // TODO: This should be an update command, not create
-        // TODO: Need to convert NodeId to Uuid properly
         CreateNodeVisual {
-            node_id: Uuid::new_v4(),
+            node_id,
             position: new_position,
             label: String::new(),
         }
@@ -73,7 +71,7 @@ impl VisualToDomainFunctor {
         _graph_id: GraphId,
     ) -> VisualizationCommand {
         VisualizationCommand::CreateNode(CreateNodeVisual {
-            node_id: Uuid::new_v4(),
+            node_id: NodeId::new(),
             position,
             label: String::new(),
         })
@@ -81,15 +79,14 @@ impl VisualToDomainFunctor {
 
     /// Map edge creation to domain command
     pub fn map_edge_creation(
-        _source: NodeId,
-        _target: NodeId,
+        source: NodeId,
+        target: NodeId,
         _graph_id: GraphId,
     ) -> VisualizationCommand {
-        // TODO: Need to convert NodeId to Uuid properly
         VisualizationCommand::CreateEdge(CreateEdgeVisual {
-            edge_id: Uuid::new_v4(),
-            source_node_id: Uuid::new_v4(),
-            target_node_id: Uuid::new_v4(),
+            edge_id: EdgeId::new(),
+            source_node_id: source,
+            target_node_id: target,
             relationship: EdgeRelationship::DependsOn, // Default relationship
         })
     }

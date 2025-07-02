@@ -5,7 +5,6 @@
 //! Run with: cargo run --example simple_demo --package cim-domain-bevy
 
 use bevy::prelude::*;
-use cim_contextgraph::ContextGraph;
 use cim_domain_bevy::*;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 use std::collections::HashMap;
@@ -21,7 +20,7 @@ fn main() {
             handle_node_creation,
             handle_edge_creation,
             render_edges,
-            create_initial_graph,
+            create_initial_graph.run_if(resource_equals(GraphCreated(false))),
         ))
         .run();
 }
@@ -31,7 +30,7 @@ struct NodeMap {
     nodes: HashMap<NodeId, Entity>,
 }
 
-#[derive(Resource)]
+#[derive(Resource, PartialEq)]
 struct GraphCreated(bool);
 
 fn setup(
@@ -62,16 +61,11 @@ fn setup(
 }
 
 fn create_initial_graph(
-    bridge: Res<CategoricalBridge>,
+    mut create_node: EventWriter<CreateNodeVisual>,
+    mut create_edge: EventWriter<CreateEdgeVisual>,
     mut created: ResMut<GraphCreated>,
 ) {
-    if created.0 {
-        return;
-    }
     created.0 = true;
-
-    let graph_id = GraphId::new();
-    let sender = bridge.domain_sender();
 
     // Create a simple triangle of nodes
     let node1 = NodeId::new();
@@ -79,50 +73,44 @@ fn create_initial_graph(
     let node3 = NodeId::new();
 
     // Send node creation events
-    let _ = sender.send(DomainEvent::NodeAdded {
-        graph_id,
+    create_node.send(CreateNodeVisual {
         node_id: node1,
-        position: Some(Vec3::new(-3.0, 0.0, 0.0)),
-        metadata: serde_json::json!({"name": "Node 1"}),
+        position: Vec3::new(-3.0, 0.0, 0.0),
+        label: "Node 1".to_string(),
     });
 
-    let _ = sender.send(DomainEvent::NodeAdded {
-        graph_id,
+    create_node.send(CreateNodeVisual {
         node_id: node2,
-        position: Some(Vec3::new(3.0, 0.0, 0.0)),
-        metadata: serde_json::json!({"name": "Node 2"}),
+        position: Vec3::new(3.0, 0.0, 0.0),
+        label: "Node 2".to_string(),
     });
 
-    let _ = sender.send(DomainEvent::NodeAdded {
-        graph_id,
+    create_node.send(CreateNodeVisual {
         node_id: node3,
-        position: Some(Vec3::new(0.0, 0.0, -3.0)),
-        metadata: serde_json::json!({"name": "Node 3"}),
+        position: Vec3::new(0.0, 0.0, -3.0),
+        label: "Node 3".to_string(),
     });
 
     // Create edges
-    let _ = sender.send(DomainEvent::EdgeAdded {
-        graph_id,
+    create_edge.send(CreateEdgeVisual {
         edge_id: EdgeId::new(),
-        source: node1,
-        target: node2,
-        metadata: serde_json::json!({"label": "Edge 1-2"}),
+        source_node_id: node1,
+        target_node_id: node2,
+        relationship: EdgeRelationship::Custom("connects".to_string()),
     });
 
-    let _ = sender.send(DomainEvent::EdgeAdded {
-        graph_id,
+    create_edge.send(CreateEdgeVisual {
         edge_id: EdgeId::new(),
-        source: node2,
-        target: node3,
-        metadata: serde_json::json!({"label": "Edge 2-3"}),
+        source_node_id: node2,
+        target_node_id: node3,
+        relationship: EdgeRelationship::Custom("connects".to_string()),
     });
 
-    let _ = sender.send(DomainEvent::EdgeAdded {
-        graph_id,
+    create_edge.send(CreateEdgeVisual {
         edge_id: EdgeId::new(),
-        source: node3,
-        target: node1,
-        metadata: serde_json::json!({"label": "Edge 3-1"}),
+        source_node_id: node3,
+        target_node_id: node1,
+        relationship: EdgeRelationship::Custom("connects".to_string()),
     });
 
     info!("Created initial graph with 3 nodes and 3 edges");
@@ -130,7 +118,7 @@ fn create_initial_graph(
 
 fn handle_node_creation(
     mut commands: Commands,
-    mut events: EventReader<CreateNodeVisual>,
+    mut events: EventReader<VisualNodeCreated>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut node_map: ResMut<NodeMap>,
@@ -139,7 +127,7 @@ fn handle_node_creation(
         info!("Creating visual for node {:?} at {:?}", event.node_id, event.position);
 
         let entity = commands.spawn((
-            NodeVisualBundle::new(event.node_id, event.graph_id, event.position),
+            NodeVisualBundle::new(event.node_id, GraphId::new(), event.position),
             Mesh3d(meshes.add(Sphere::new(0.5).mesh())),
             MeshMaterial3d(materials.add(StandardMaterial {
                 base_color: Color::srgb(0.3, 0.7, 0.9),
@@ -153,20 +141,21 @@ fn handle_node_creation(
 
 fn handle_edge_creation(
     mut commands: Commands,
-    mut events: EventReader<CreateEdgeVisual>,
+    mut events: EventReader<VisualEdgeCreated>,
     node_map: Res<NodeMap>,
 ) {
     for event in events.read() {
-        if let (Some(&source_entity), Some(&target_entity)) = (
-            node_map.nodes.get(&event.source_id),
-            node_map.nodes.get(&event.target_id),
-        ) {
-            info!("Creating edge visual between {:?} and {:?}", event.source_id, event.target_id);
+        info!("Creating edge visual between source entity {:?} and target entity {:?}", 
+              event.source_entity, event.target_entity);
 
-            commands.spawn(
-                EdgeVisualBundle::new(event.edge_id, event.graph_id, source_entity, target_entity)
-            );
-        }
+        commands.spawn(
+            EdgeVisualBundle::new(
+                event.edge_id, 
+                GraphId::new(), 
+                event.source_entity, 
+                event.target_entity
+            )
+        );
     }
 }
 

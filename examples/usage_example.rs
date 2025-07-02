@@ -6,7 +6,7 @@
 //! 3. Connect to a domain layer through the bridge
 
 use bevy::prelude::*;
-use cim_viz_bevy::*;
+use cim_domain_bevy::*;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 
 fn main() {
@@ -100,16 +100,16 @@ fn handle_edge_creation(
         let mut target_entity = None;
 
         for (entity, node) in nodes.iter() {
-            if node.node_id == event.source_id {
+            if node.node_id == event.source_node_id {
                 source_entity = Some(entity);
             }
-            if node.node_id == event.target_id {
+            if node.node_id == event.target_node_id {
                 target_entity = Some(entity);
             }
         }
 
         if let (Some(source), Some(target)) = (source_entity, target_entity) {
-            info!("Creating edge visual between {:?} and {:?}", event.source_id, event.target_id);
+            info!("Creating edge visual between {:?} and {:?}", event.source_node_id, event.target_node_id);
 
             // Spawn edge visual (simplified - real app would render a line/curve)
             commands.spawn(
@@ -126,7 +126,7 @@ fn handle_mouse_clicks(
     camera: Query<(&Camera, &GlobalTransform), With<GraphCamera>>,
     nodes: Query<(Entity, &NodeVisual, &Transform)>,
     mut node_click_events: EventWriter<NodeClicked>,
-    mut background_click_events: EventWriter<BackgroundClicked>,
+
 ) {
     if !mouse_button.just_pressed(MouseButton::Left) {
         return;
@@ -175,18 +175,7 @@ fn handle_mouse_clicks(
                 node_click_events.send(NodeClicked {
                     entity,
                     node_id: node_visual.node_id,
-                    graph_id: node_visual.graph_id,
-                    world_position: hit_point,
                 });
-            } else {
-                // Send background clicked event
-                let ground_t = -origin.y / direction.y;
-                if ground_t > 0.0 {
-                    let ground_point = origin + direction * ground_t;
-                    background_click_events.send(BackgroundClicked {
-                        world_position: ground_point,
-                    });
-                }
             }
         }
     }
@@ -207,20 +196,12 @@ fn update_node_positions(
     }
 }
 
-/// Example of connecting to a domain layer (would be in a separate module/crate)
-fn domain_connection_example(bridge: Res<CategoricalBridge>) {
-    // Simulate receiving events from domain
-    let domain_event = DomainEvent::NodeAdded {
-        graph_id: GraphId::new(),
-        node_id: NodeId::new(),
-        position: Some(Vec3::new(5.0, 0.0, 5.0)),
-        metadata: serde_json::json!({
-            "type": "Person",
-            "name": "Alice"
-        }),
-    };
-
-    // In a real app, this would come from an async domain layer
-    let sender = bridge.domain_sender();
-    let _ = sender.send(domain_event);
+/// Example of creating a node through the visualization API
+fn create_node_example(mut create_node: EventWriter<CreateNodeVisual>) {
+    // Create a node at a specific position
+    create_node.send(CreateNodeVisual {
+        node_id: uuid::Uuid::new_v4(),
+        position: Vec3::new(5.0, 0.0, 5.0),
+        label: "Alice".to_string(),
+    });
 }

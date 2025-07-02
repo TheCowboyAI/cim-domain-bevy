@@ -1,7 +1,7 @@
 //! Simple test to verify event logging is working
 
 use bevy::prelude::*;
-use cim_viz_bevy::*;
+use cim_domain_bevy::*;
 
 fn main() {
     println!("Starting event test demo...");
@@ -15,39 +15,40 @@ fn main() {
 }
 
 fn setup(
-    bridge: Res<CategoricalBridge>,
+    mut commands: Commands,
+    mut create_node: EventWriter<CreateNodeVisual>,
 ) {
-    println!("Setup: Sending test event");
+    println!("Setup: Creating test node");
 
-    let event = DomainEvent::NodeAdded {
-        graph_id: Default::default(),
-        node_id: Default::default(),
-        position: Some(Vec3::ZERO),
-        metadata: serde_json::Value::Null,
-    };
-
-    bridge.send_domain_event(event);
+    // Create a test node visual
+    create_node.send(CreateNodeVisual {
+        node_id: uuid::Uuid::new_v4(),
+        position: Vec3::ZERO,
+        label: "Test Node".to_string(),
+    });
 }
 
 fn test_events(
-    mut events: EventReader<DomainEvent>,
+    mut node_created: EventReader<VisualNodeCreated>,
+    mut node_clicked: EventReader<NodeClicked>,
     keyboard: Res<ButtonInput<KeyCode>>,
-    bridge: Res<CategoricalBridge>,
+    mut create_node: EventWriter<CreateNodeVisual>,
 ) {
-    for event in events.read() {
-        println!("Received event: {:?}", event);
+    for event in node_created.read() {
+        println!("Node visual created: {:?}", event.node_id);
+    }
+
+    for event in node_clicked.read() {
+        println!("Node clicked: {:?}", event.node_id);
     }
 
     if keyboard.just_pressed(KeyCode::Space) {
-        println!("SPACE pressed - sending test event");
+        println!("SPACE pressed - creating test node");
 
-        let event = DomainEvent::NodeAdded {
-            graph_id: Default::default(),
-            node_id: Default::default(),
-            position: Some(Vec3::new(1.0, 2.0, 3.0)),
-            metadata: serde_json::json!({"test": true}),
-        };
-
-        bridge.send_domain_event(event);
+        create_node.send(CreateNodeVisual {
+            node_id: uuid::Uuid::new_v4(),
+            position: Vec3::new(1.0, 2.0, 3.0),
+            label: "Dynamic Node".to_string(),
+        });
     }
 }

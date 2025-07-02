@@ -106,7 +106,7 @@ mod tests {
 
         // Test sending visualization command
         let event = VisualizationCommand::CreateNode(crate::events::CreateNodeVisual {
-            node_id: uuid::Uuid::new_v4(),
+            node_id: NodeId::new(),
             position: Vec3::ZERO,
             label: "Test".to_string(),
         });

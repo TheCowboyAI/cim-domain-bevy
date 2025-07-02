@@ -7,7 +7,21 @@
 use bevy::prelude::*;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 use crate::events::*;
+use std::collections::HashMap;
 
+/// Resource for tracking node entity mappings
+#[derive(Resource, Default)]
+pub struct NodeEntityMap(HashMap<NodeId, Entity>);
+
+impl NodeEntityMap {
+    pub fn insert(&mut self, node_id: NodeId, entity: Entity) {
+        self.0.insert(node_id, entity);
+    }
+
+    pub fn get(&self, node_id: &NodeId) -> Option<&Entity> {
+        self.0.get(node_id)
+    }
+}
 
 /// Morphism from domain node operations to visual node operations
 pub trait NodeMorphism {
@@ -165,21 +179,23 @@ pub enum DomainCommand {
 pub fn create_node_visual(
     mut commands: Commands,
     mut events: EventReader<CreateNodeVisual>,
+    mut visual_created: EventWriter<VisualNodeCreated>,
 ) {
     for event in events.read() {
-        // Since we can't construct NodeId from Uuid, we create a new one
-        // and also store the visual ID for mapping
-        let node_id = NodeId::new();
-        let _entity = commands.spawn((
+        let entity = commands.spawn((
             crate::components::NodeVisualBundle::new(
-                node_id,
+                event.node_id,
                 GraphId::new(), // TODO: Add graph_id to CreateNodeVisual event
                 event.position,
             ),
-            crate::components::VisualNodeId(event.node_id),
         )).id();
         
-        // TODO: Store mapping between visual ID and domain NodeId
+        // Emit visual created event
+        visual_created.write(VisualNodeCreated {
+            entity,
+            node_id: event.node_id,
+            position: event.position,
+        });
     }
 }
 
@@ -187,12 +203,12 @@ pub fn create_node_visual(
 pub fn remove_node_visual(
     mut commands: Commands,
     mut events: EventReader<RemoveNodeVisual>,
-    query: Query<(Entity, &crate::components::VisualNodeId)>,
+    query: Query<(Entity, &crate::components::NodeVisual)>,
 ) {
     for event in events.read() {
-        // Find entities with matching visual ID
-        for (entity, visual_id) in query.iter() {
-            if visual_id.0 == event.node_id {
+        // Find entities with matching node ID
+        for (entity, node_visual) in query.iter() {
+            if node_visual.node_id == event.node_id {
                 commands.entity(entity).despawn();
             }
         }
@@ -203,33 +219,40 @@ pub fn remove_node_visual(
 pub fn create_edge_visual(
     mut commands: Commands,
     mut events: EventReader<CreateEdgeVisual>,
-    nodes: Query<(Entity, &crate::components::VisualNodeId)>,
+    nodes: Query<(Entity, &crate::components::NodeVisual)>,
+    mut visual_created: EventWriter<VisualEdgeCreated>,
 ) {
     for event in events.read() {
-        // Find source and target entities by visual ID
+        // Find source and target entities by node ID
         let mut source_entity = None;
         let mut target_entity = None;
 
-        for (entity, visual_id) in nodes.iter() {
-            if visual_id.0 == event.source_node_id {
+        for (entity, node_visual) in nodes.iter() {
+            if node_visual.node_id == event.source_node_id {
                 source_entity = Some(entity);
             }
-            if visual_id.0 == event.target_node_id {
+            if node_visual.node_id == event.target_node_id {
                 target_entity = Some(entity);
             }
         }
 
         if let (Some(source), Some(target)) = (source_entity, target_entity) {
-            let edge_id = EdgeId::new();
-            commands.spawn((
+            let entity = commands.spawn((
                 crate::components::EdgeVisualBundle::new(
-                    edge_id,
+                    event.edge_id,
                     GraphId::new(), // TODO: Add graph_id to CreateEdgeVisual event
                     source,
                     target,
                 ),
-                crate::components::VisualEdgeId(event.edge_id),
-            ));
+            )).id();
+            
+            // Emit visual created event
+            visual_created.write(VisualEdgeCreated {
+                entity,
+                edge_id: event.edge_id,
+                source_entity: source,
+                target_entity: target,
+            });
         }
     }
 }
@@ -238,12 +261,12 @@ pub fn create_edge_visual(
 pub fn remove_edge_visual(
     mut commands: Commands,
     mut events: EventReader<RemoveEdgeVisual>,
-    query: Query<(Entity, &crate::components::VisualEdgeId)>,
+    query: Query<(Entity, &crate::components::EdgeVisual)>,
 ) {
     for event in events.read() {
-        // Find entities with matching visual ID
-        for (entity, visual_id) in query.iter() {
-            if visual_id.0 == event.edge_id {
+        // Find entities with matching edge ID
+        for (entity, edge_visual) in query.iter() {
+            if edge_visual.edge_id == event.edge_id {
                 commands.entity(entity).despawn();
             }
         }

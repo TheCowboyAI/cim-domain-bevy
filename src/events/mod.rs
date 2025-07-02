@@ -4,7 +4,6 @@
 //! These are emitted by systems after processing commands.
 
 use bevy::prelude::*;
-use uuid::Uuid;
 use cim_contextgraph::{NodeId, EdgeId};
 
 /// Position type for events
@@ -107,7 +106,7 @@ pub struct CanvasZoomed {
 /// Command to create a node visual
 #[derive(Event, Debug, Clone)]
 pub struct CreateNodeVisual {
-    pub node_id: Uuid,
+    pub node_id: NodeId,
     pub position: Vec3,
     pub label: String,
 }
@@ -115,22 +114,22 @@ pub struct CreateNodeVisual {
 /// Command to remove a node visual
 #[derive(Event, Debug, Clone)]
 pub struct RemoveNodeVisual {
-    pub node_id: Uuid,
+    pub node_id: NodeId,
 }
 
 /// Command to create an edge visual
 #[derive(Event, Debug, Clone)]
 pub struct CreateEdgeVisual {
-    pub edge_id: Uuid,
-    pub source_node_id: Uuid,
-    pub target_node_id: Uuid,
+    pub edge_id: EdgeId,
+    pub source_node_id: NodeId,
+    pub target_node_id: NodeId,
     pub relationship: EdgeRelationship,
 }
 
 /// Command to remove an edge visual
 #[derive(Event, Debug, Clone)]
 pub struct RemoveEdgeVisual {
-    pub edge_id: Uuid,
+    pub edge_id: EdgeId,
 }
 
 /// Edge relationship types

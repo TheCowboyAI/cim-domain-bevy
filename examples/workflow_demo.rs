@@ -130,7 +130,8 @@ fn setup_scene(
 
 fn create_workflow(
     mut demo: ResMut<WorkflowDemo>,
-    bridge: Res<CategoricalBridge>,
+    mut create_node: EventWriter<CreateNodeVisual>,
+    mut create_edge: EventWriter<CreateEdgeVisual>,
 ) {
     let graph_id = GraphId::new();
     demo.graph_id = Some(graph_id);
@@ -146,7 +147,6 @@ fn create_workflow(
         ("Rejected", WorkflowNodeType::End, Vec3::new(8.0, -4.0, 0.0)),
     ];
 
-    let sender = bridge.domain_sender();
     let mut node_ids = Vec::new();
 
     // Create nodes
@@ -156,17 +156,11 @@ fn create_workflow(
 
         demo.node_states.insert(node_id, NodeState::Pending);
 
-        let event = DomainEvent::NodeAdded {
-            graph_id,
-            node_id,
-            position: Some(position),
-            metadata: serde_json::json!({
-                "name": name,
-                "type": format!("{:?}", node_type),
-            }),
-        };
-
-        let _ = sender.send(event);
+        create_node.send(CreateNodeVisual {
+            node_id: node_id.into(),
+            position,
+            label: name.to_string(),
+        });
     }
 
     // Create edges
@@ -181,17 +175,12 @@ fn create_workflow(
     ];
 
     for (from, to, label) in edges {
-        let event = DomainEvent::EdgeAdded {
-            graph_id,
-            edge_id: EdgeId::new(),
-            source_id: node_ids[from],
-            target_id: node_ids[to],
-            metadata: serde_json::json!({
-                "label": label,
-            }),
-        };
-
-        let _ = sender.send(event);
+        create_edge.send(CreateEdgeVisual {
+            edge_id: EdgeId::new().into(),
+            source_node_id: node_ids[from].into(),
+            target_node_id: node_ids[to].into(),
+            relationship: EdgeRelationship::Custom(label.to_string()),
+        });
     }
 }
 
@@ -287,7 +276,7 @@ fn render_edges(
 
 fn animate_workflow(
     mut demo: ResMut<WorkflowDemo>,
-    mut nodes: Query<(&NodeVisual, &WorkflowNode, &mut Handle<StandardMaterial>)>,
+    mut nodes: Query<(&NodeVisual, &WorkflowNode, &MeshMaterial3d<StandardMaterial>)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     time: Res<Time>,
 ) {
@@ -296,10 +285,10 @@ fn animate_workflow(
     }
 
     // Simple animation: pulse the active node
-    for (node_visual, workflow_node, material_handle) in nodes.iter_mut() {
+    for (node_visual, workflow_node, material_handle) in nodes.iter() {
         if let Some(&state) = demo.node_states.get(&node_visual.node_id) {
             if state == NodeState::Active {
-                if let Some(material) = materials.get_mut(material_handle) {
+                if let Some(material) = materials.get_mut(&material_handle.0) {
                     let pulse = (time.elapsed_secs() * 3.0).sin() * 0.5 + 0.5;
                     let base_color = match workflow_node.node_type {
                         WorkflowNodeType::Start => Color::srgb(0.2, 0.8, 0.2),
@@ -319,7 +308,7 @@ fn handle_interaction(
     mouse_button: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera: Query<(&Camera, &GlobalTransform), With<GraphCamera>>,
-    mut nodes: Query<(Entity, &NodeVisual, &Transform, &WorkflowNode, &mut Handle<StandardMaterial>)>,
+    mut nodes: Query<(Entity, &NodeVisual, &Transform, &WorkflowNode, &MeshMaterial3d<StandardMaterial>)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if !mouse_button.just_pressed(MouseButton::Left) {
@@ -332,7 +321,7 @@ fn handle_interaction(
     if let Some(cursor_position) = window.cursor_position() {
         if let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_position) {
             // Check for node clicks
-            for (entity, node_visual, transform, workflow_node, material_handle) in nodes.iter_mut() {
+            for (entity, node_visual, transform, workflow_node, material_handle) in nodes.iter() {
                 let distance = ray.closest_point_to_point(transform.translation)
                     .distance(transform.translation);
 
@@ -361,7 +350,7 @@ fn handle_interaction(
                                 demo.current_step += 1;
 
                                 // Update material
-                                if let Some(material) = materials.get_mut(material_handle) {
+                                if let Some(material) = materials.get_mut(&material_handle.0) {
                                     material.base_color = Color::srgb(0.2, 0.8, 0.2);
                                 }
                             }
