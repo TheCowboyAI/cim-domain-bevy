@@ -165,7 +165,7 @@ fn create_demo_graph(
         create_node.send(CreateNodeVisual {
             node_id,
             position: *pos,
-            label: format!("Node {}", i + 1),
+            label: format!("Node {i + 1}"),
         });
     }
 
@@ -388,17 +388,13 @@ fn update_info_text(
 ) {
     if demo_state.is_changed() {
         if let Ok(mut text) = text_query.get_single_mut() {
-            text.0 = format!(
-                "CIM Graph Demo\n\
-                Nodes: {}\n\
-                Edges: {}\n\
-                Selected: {}\n\n\
+            text.0 = format!("CIM Graph Demo\n\
+                Nodes: {demo_state.node_count}\n\
+                Edges: {demo_state.edge_count}\n\
+                Selected: {if demo_state.selected_node.is_some(}\n\n\
                 Press SPACE to add nodes\n\
                 Click nodes to select\n\
-                Press D to delete selected",
-                demo_state.node_count,
-                demo_state.edge_count,
-                if demo_state.selected_node.is_some() { "Yes" } else { "No" }
+                Press D to delete selected") { "Yes" } else { "No" }
             );
         }
     }

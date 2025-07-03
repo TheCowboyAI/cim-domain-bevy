@@ -5,8 +5,8 @@
 //! Run with: cargo run --example simple_demo --package cim-domain-bevy
 
 use bevy::prelude::*;
+use cim_contextgraph::{ContextGraphId as GraphId, EdgeId, NodeId};
 use cim_domain_bevy::*;
-use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 use std::collections::HashMap;
 
 fn main() {
@@ -16,12 +16,15 @@ fn main() {
         .insert_resource(NodeMap::default())
         .insert_resource(GraphCreated(false))
         .add_systems(Startup, setup)
-        .add_systems(Update, (
-            handle_node_creation,
-            handle_edge_creation,
-            render_edges,
-            create_initial_graph.run_if(resource_equals(GraphCreated(false))),
-        ))
+        .add_systems(
+            Update,
+            (
+                handle_node_creation,
+                handle_edge_creation,
+                render_edges,
+                create_initial_graph.run_if(resource_equals(GraphCreated(false))),
+            ),
+        )
         .run();
 }
 
@@ -33,9 +36,7 @@ struct NodeMap {
 #[derive(Resource, PartialEq)]
 struct GraphCreated(bool);
 
-fn setup(
-    mut commands: Commands,
-) {
+fn setup(mut commands: Commands) {
     // Camera
     commands.spawn((
         Camera3d::default(),
@@ -124,16 +125,21 @@ fn handle_node_creation(
     mut node_map: ResMut<NodeMap>,
 ) {
     for event in events.read() {
-        info!("Creating visual for node {:?} at {:?}", event.node_id, event.position);
+        info!(
+            "Creating visual for node {:?} at {:?}",
+            event.node_id, event.position
+        );
 
-        let entity = commands.spawn((
-            NodeVisualBundle::new(event.node_id, GraphId::new(), event.position),
-            Mesh3d(meshes.add(Sphere::new(0.5).mesh())),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.3, 0.7, 0.9),
-                ..default()
-            })),
-        )).id();
+        let entity = commands
+            .spawn((
+                NodeVisualBundle::new(event.node_id, GraphId::new(), event.position),
+                Mesh3d(meshes.add(Sphere::new(0.5).mesh())),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.3, 0.7, 0.9),
+                    ..default()
+                })),
+            ))
+            .id();
 
         node_map.nodes.insert(event.node_id, entity);
     }
@@ -145,30 +151,25 @@ fn handle_edge_creation(
     node_map: Res<NodeMap>,
 ) {
     for event in events.read() {
-        info!("Creating edge visual between source entity {:?} and target entity {:?}", 
-              event.source_entity, event.target_entity);
-
-        commands.spawn(
-            EdgeVisualBundle::new(
-                event.edge_id, 
-                GraphId::new(), 
-                event.source_entity, 
-                event.target_entity
-            )
+        info!(
+            "Creating edge visual between source entity {:?} and target entity {:?}",
+            event.source_entity, event.target_entity
         );
+
+        commands.spawn(EdgeVisualBundle::new(
+            event.edge_id,
+            GraphId::new(),
+            event.source_entity,
+            event.target_entity,
+        ));
     }
 }
 
-fn render_edges(
-    mut gizmos: Gizmos,
-    edges: Query<&EdgeVisual>,
-    nodes: Query<&Transform>,
-) {
+fn render_edges(mut gizmos: Gizmos, edges: Query<&EdgeVisual>, nodes: Query<&Transform>) {
     for edge in edges.iter() {
-        if let (Ok(source_transform), Ok(target_transform)) = (
-            nodes.get(edge.source_entity),
-            nodes.get(edge.target_entity),
-        ) {
+        if let (Ok(source_transform), Ok(target_transform)) =
+            (nodes.get(edge.source_entity), nodes.get(edge.target_entity))
+        {
             gizmos.line(
                 source_transform.translation,
                 target_transform.translation,

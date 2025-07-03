@@ -7,7 +7,7 @@
 //! Run with: cargo run --example workflow_demo --features bevy/dynamic_linking
 
 use bevy::prelude::*;
-use cim_contextgraph::{ContextGraph, NodeId, EdgeId, ContextGraphId as GraphId};
+use cim_contextgraph::{ContextGraph, ContextGraphId as GraphId, EdgeId, NodeId};
 use cim_domain_bevy::*;
 use std::collections::HashMap;
 
@@ -25,14 +25,18 @@ fn main() {
         .insert_resource(WorkflowDemo::default())
         .insert_resource(NodeEntityMap::default())
         .add_systems(Startup, (setup_scene, create_workflow))
-        .add_systems(Update, (
-            handle_node_creation,
-            handle_edge_creation,
-            render_edges,
-            animate_workflow,
-            handle_interaction,
-            update_ui,
-        ).chain())
+        .add_systems(
+            Update,
+            (
+                handle_node_creation,
+                handle_edge_creation,
+                render_edges,
+                animate_workflow,
+                handle_interaction,
+                update_ui,
+            )
+                .chain(),
+        )
         .run();
 }
 
@@ -86,9 +90,7 @@ struct EdgeLine;
 #[derive(Component)]
 struct UIText;
 
-fn setup_scene(
-    mut commands: Commands,
-) {
+fn setup_scene(mut commands: Commands) {
     // Camera - orthographic for 2D-style workflow view
     commands.spawn((
         Camera3d {
@@ -112,7 +114,9 @@ fn setup_scene(
 
     // UI
     commands.spawn((
-        Text::new("Document Approval Workflow\n\nClick 'Start' to begin\nClick active nodes to progress"),
+        Text::new(
+            "Document Approval Workflow\n\nClick 'Start' to begin\nClick active nodes to progress",
+        ),
         TextFont {
             font_size: 24.0,
             ..default()
@@ -139,9 +143,17 @@ fn create_workflow(
     // Define workflow nodes
     let nodes = vec![
         ("Start", WorkflowNodeType::Start, Vec3::new(-8.0, 0.0, 0.0)),
-        ("Submit Document", WorkflowNodeType::Task, Vec3::new(-4.0, 0.0, 0.0)),
+        (
+            "Submit Document",
+            WorkflowNodeType::Task,
+            Vec3::new(-4.0, 0.0, 0.0),
+        ),
         ("Review", WorkflowNodeType::Task, Vec3::new(0.0, 0.0, 0.0)),
-        ("Approval Decision", WorkflowNodeType::Decision, Vec3::new(4.0, 0.0, 0.0)),
+        (
+            "Approval Decision",
+            WorkflowNodeType::Decision,
+            Vec3::new(4.0, 0.0, 0.0),
+        ),
         ("Revise", WorkflowNodeType::Task, Vec3::new(0.0, -4.0, 0.0)),
         ("Approved", WorkflowNodeType::End, Vec3::new(8.0, 0.0, 0.0)),
         ("Rejected", WorkflowNodeType::End, Vec3::new(8.0, -4.0, 0.0)),
@@ -219,19 +231,21 @@ fn handle_node_creation(
             ),
         };
 
-        let entity = commands.spawn((
-            NodeVisualBundle::new(event.node_id, event.graph_id, event.position),
-            Mesh3d(mesh),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: color * 0.5, // Dimmed initially
-                unlit: true,
-                ..default()
-            })),
-            WorkflowNode {
-                node_type,
-                state: NodeState::Pending,
-            },
-        )).id();
+        let entity = commands
+            .spawn((
+                NodeVisualBundle::new(event.node_id, event.graph_id, event.position),
+                Mesh3d(mesh),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: color * 0.5, // Dimmed initially
+                    unlit: true,
+                    ..default()
+                })),
+                WorkflowNode {
+                    node_type,
+                    state: NodeState::Pending,
+                },
+            ))
+            .id();
 
         node_map.map.insert(event.node_id, entity);
     }
@@ -261,10 +275,9 @@ fn render_edges(
     nodes: Query<&Transform, With<NodeVisual>>,
 ) {
     for edge in edges.iter() {
-        if let (Ok(source_transform), Ok(target_transform)) = (
-            nodes.get(edge.source_entity),
-            nodes.get(edge.target_entity),
-        ) {
+        if let (Ok(source_transform), Ok(target_transform)) =
+            (nodes.get(edge.source_entity), nodes.get(edge.target_entity))
+        {
             let start = source_transform.translation;
             let end = target_transform.translation;
 
@@ -276,7 +289,11 @@ fn render_edges(
 
 fn animate_workflow(
     mut demo: ResMut<WorkflowDemo>,
-    mut nodes: Query<(&NodeVisual, &WorkflowNode, &MeshMaterial3d<StandardMaterial>)>,
+    mut nodes: Query<(
+        &NodeVisual,
+        &WorkflowNode,
+        &MeshMaterial3d<StandardMaterial>,
+    )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     time: Res<Time>,
 ) {
@@ -308,21 +325,32 @@ fn handle_interaction(
     mouse_button: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera: Query<(&Camera, &GlobalTransform), With<GraphCamera>>,
-    mut nodes: Query<(Entity, &NodeVisual, &Transform, &WorkflowNode, &MeshMaterial3d<StandardMaterial>)>,
+    mut nodes: Query<(
+        Entity,
+        &NodeVisual,
+        &Transform,
+        &WorkflowNode,
+        &MeshMaterial3d<StandardMaterial>,
+    )>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     if !mouse_button.just_pressed(MouseButton::Left) {
         return;
     }
 
-    let Ok(window) = windows.get_single() else { return };
-    let Ok((camera, camera_transform)) = camera.get_single() else { return };
+    let Ok(window) = windows.get_single() else {
+        return;
+    };
+    let Ok((camera, camera_transform)) = camera.get_single() else {
+        return;
+    };
 
     if let Some(cursor_position) = window.cursor_position() {
         if let Ok(ray) = camera.viewport_to_world(camera_transform, cursor_position) {
             // Check for node clicks
             for (entity, node_visual, transform, workflow_node, material_handle) in nodes.iter() {
-                let distance = ray.closest_point_to_point(transform.translation)
+                let distance = ray
+                    .closest_point_to_point(transform.translation)
                     .distance(transform.translation);
 
                 if distance < 1.0 {
@@ -332,10 +360,13 @@ fn handle_interaction(
                             (WorkflowNodeType::Start, NodeState::Pending) => {
                                 // Start the workflow
                                 demo.workflow_state = WorkflowState::Running;
-                                demo.node_states.insert(node_visual.node_id, NodeState::Completed);
+                                demo.node_states
+                                    .insert(node_visual.node_id, NodeState::Completed);
 
                                 // Activate next node
-                                if let Some((next_id, _)) = demo.node_states.iter()
+                                if let Some((next_id, _)) = demo
+                                    .node_states
+                                    .iter()
                                     .find(|(_, &s)| s == NodeState::Pending)
                                     .map(|(id, s)| (*id, *s))
                                 {
@@ -344,7 +375,8 @@ fn handle_interaction(
                             }
                             (_, NodeState::Active) => {
                                 // Progress the workflow
-                                demo.node_states.insert(node_visual.node_id, NodeState::Completed);
+                                demo.node_states
+                                    .insert(node_visual.node_id, NodeState::Completed);
 
                                 // Simple progression logic
                                 demo.current_step += 1;
@@ -364,10 +396,7 @@ fn handle_interaction(
     }
 }
 
-fn update_ui(
-    mut text_query: Query<&mut Text, With<UIText>>,
-    demo: Res<WorkflowDemo>,
-) {
+fn update_ui(mut text_query: Query<&mut Text, With<UIText>>, demo: Res<WorkflowDemo>) {
     if demo.is_changed() {
         if let Ok(mut text) = text_query.get_single_mut() {
             let status = match demo.workflow_state {
@@ -379,11 +408,9 @@ fn update_ui(
 
             text.0 = format!(
                 "Document Approval Workflow\n\
-                Status: {}\n\
-                Step: {}\n\n\
-                Click nodes to progress through the workflow",
-                status,
-                demo.current_step
+                Status: {status}\n\
+                Step: {demo.current_step}\n\n\
+                Click nodes to progress through the workflow"
             );
         }
     }

@@ -14,10 +14,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut create_node: EventWriter<CreateNodeVisual>,
-) {
+fn setup(mut commands: Commands, mut create_node: EventWriter<CreateNodeVisual>) {
     println!("Setup: Creating test node");
 
     // Create a test node visual

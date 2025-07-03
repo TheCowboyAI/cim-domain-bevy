@@ -3,9 +3,9 @@
 //! These tests verify that the functor between Bevy ECS and CIM-ContextGraph
 //! preserves structure and maintains the isomorphism.
 
-use cim_domain_bevy::*;
-use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 use bevy::prelude::*;
+use cim_contextgraph::{ContextGraphId as GraphId, EdgeId, NodeId};
+use cim_domain_bevy::*;
 
 #[test]
 fn test_domain_to_visual_functor_preserves_identity() {
@@ -63,10 +63,7 @@ fn test_morphism_preservation() {
     let node_id = NodeId::new();
 
     // Create a click morphism
-    let click_event = NodeClicked {
-        entity,
-        node_id,
-    };
+    let click_event = NodeClicked { entity, node_id };
 
     // Verify the morphism structure is preserved
     assert_eq!(click_event.entity, entity);
@@ -195,7 +192,13 @@ mod integration_tests {
 
         // Events should be properly registered
         assert!(app.world().get_resource::<Events<NodeClicked>>().is_some());
-        assert!(app.world().get_resource::<Events<CreateNodeVisual>>().is_some());
-        assert!(app.world().get_resource::<Events<RemoveNodeVisual>>().is_some());
+        assert!(app
+            .world()
+            .get_resource::<Events<CreateNodeVisual>>()
+            .is_some());
+        assert!(app
+            .world()
+            .get_resource::<Events<RemoveNodeVisual>>()
+            .is_some());
     }
 }

@@ -6,8 +6,8 @@
 //! 3. Connect to a domain layer through the bridge
 
 use bevy::prelude::*;
+use cim_contextgraph::{ContextGraphId as GraphId, EdgeId, NodeId};
 use cim_domain_bevy::*;
-use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 
 fn main() {
     App::new()
@@ -18,13 +18,16 @@ fn main() {
         .add_plugins(CimVizDebugPlugin)
         // Add app-specific visualization systems
         .add_systems(Startup, setup)
-        .add_systems(Update, (
-            handle_node_creation,
-            handle_node_removal,
-            handle_edge_creation,
-            handle_mouse_clicks,
-            update_node_positions,
-        ))
+        .add_systems(
+            Update,
+            (
+                handle_node_creation,
+                handle_node_removal,
+                handle_edge_creation,
+                handle_mouse_clicks,
+                update_node_positions,
+            ),
+        )
         .run();
 }
 
@@ -109,12 +112,18 @@ fn handle_edge_creation(
         }
 
         if let (Some(source), Some(target)) = (source_entity, target_entity) {
-            info!("Creating edge visual between {:?} and {:?}", event.source_node_id, event.target_node_id);
+            info!(
+                "Creating edge visual between {:?} and {:?}",
+                event.source_node_id, event.target_node_id
+            );
 
             // Spawn edge visual (simplified - real app would render a line/curve)
-            commands.spawn(
-                EdgeVisualBundle::new(event.edge_id, event.graph_id, source, target)
-            );
+            commands.spawn(EdgeVisualBundle::new(
+                event.edge_id,
+                event.graph_id,
+                source,
+                target,
+            ));
         }
     }
 }
@@ -126,7 +135,6 @@ fn handle_mouse_clicks(
     camera: Query<(&Camera, &GlobalTransform), With<GraphCamera>>,
     nodes: Query<(Entity, &NodeVisual, &Transform)>,
     mut node_click_events: EventWriter<NodeClicked>,
-
 ) {
     if !mouse_button.just_pressed(MouseButton::Left) {
         return;

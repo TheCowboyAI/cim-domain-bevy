@@ -7,8 +7,8 @@
 //! - Resource management
 
 use bevy::prelude::*;
+use cim_contextgraph::{ContextGraphId as GraphId, EdgeId, NodeId};
 use cim_domain_bevy::*;
-use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 
 fn main() {
     println!("=== CIM Bevy Domain Example ===\n");
@@ -23,10 +23,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    mut create_node: EventWriter<CreateNodeVisual>,
-) {
+fn setup(mut commands: Commands, mut create_node: EventWriter<CreateNodeVisual>) {
     // Camera
     commands.spawn((
         Camera3d::default(),
@@ -48,10 +45,7 @@ fn setup(
     });
 }
 
-fn handle_selection(
-    mut node_clicked: EventReader<NodeClicked>,
-    mut selection: ResMut<Selection>,
-) {
+fn handle_selection(mut node_clicked: EventReader<NodeClicked>, mut selection: ResMut<Selection>) {
     for event in node_clicked.read() {
         println!("Node clicked: {:?}", event.node_id);
         selection.nodes.push((event.entity, event.node_id));
