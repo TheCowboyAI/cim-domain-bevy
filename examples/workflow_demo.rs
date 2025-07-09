@@ -12,21 +12,30 @@ use std::collections::HashMap;
 use cim_contextgraph::{NodeId, EdgeId, ContextGraphId as GraphId};
 
 fn main() {
-    println!("Starting Workflow Demo - Limited features version");
-    println!("This demo visualizes a simple workflow with nodes and edges");
+    println!("Starting Workflow Visualization Demo");
+    println!("This demo visualizes a document approval workflow with interactive nodes and edges");
     
     App::new()
-        .add_plugins(MinimalPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "CIM Workflow Visualization Demo".into(),
+                resolution: (1200., 800.).into(),
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugins(CimVizPlugin::default())
         .insert_resource(WorkflowDemo::default())
         .insert_resource(NodeEntityMap::default())
-        .add_systems(Startup, create_workflow)
+        .add_systems(Startup, (setup_scene, create_workflow))
         .add_systems(
             Update,
             (
                 handle_node_creation,
                 handle_edge_creation,
-                print_workflow_status,
+                animate_workflow,
+                update_node_visuals,
+                handle_input,
             ),
         )
         .run();
@@ -38,6 +47,7 @@ struct WorkflowDemo {
     workflow_state: WorkflowState,
     current_step: usize,
     node_states: HashMap<NodeId, NodeState>,
+    animation_timer: Timer,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Debug)]
@@ -82,12 +92,52 @@ struct EdgeLine {
     label: String,
 }
 
+// Component to track material for state changes
+#[derive(Component)]
+struct NodeMaterial {
+    state: NodeState,
+}
+
+fn setup_scene(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // Camera
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 15.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
+
+    // Light
+    commands.spawn((
+        DirectionalLight {
+            illuminance: 10_000.0,
+            ..default()
+        },
+        Transform::from_rotation(Quat::from_rotation_x(-0.3)),
+    ));
+
+    // Ground plane
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.1, 0.1, 0.1),
+            ..default()
+        })),
+        Transform::from_xyz(0.0, -2.0, 0.0),
+    ));
+
+    println!("Scene setup complete");
+}
+
 fn create_workflow(
     mut demo: ResMut<WorkflowDemo>,
     mut create_node: EventWriter<CreateNodeVisual>,
     mut create_edge: EventWriter<CreateEdgeVisual>,
 ) {
     demo.graph_id = GraphId::new();
+    demo.animation_timer = Timer::from_seconds(2.0, TimerMode::Repeating);
     
     println!("\n=== Creating Document Approval Workflow ===");
     
@@ -109,11 +159,17 @@ fn create_workflow(
         let node_id = NodeId::new();
         node_ids.push(node_id);
 
-        demo.node_states.insert(node_id, NodeState::Pending);
+        let initial_state = if node_type == WorkflowNodeType::Start {
+            NodeState::Completed
+        } else {
+            NodeState::Pending
+        };
+
+        demo.node_states.insert(node_id, initial_state);
 
         println!("Creating node: {} ({:?})", name, node_type);
         
-        create_node.write(CreateNodeVisual {
+        create_node.send(CreateNodeVisual {
             node_id,
             position,
             label: name.to_string(),
@@ -135,7 +191,7 @@ fn create_workflow(
     for (from, to, label) in edges {
         println!("  {} -> {} ({})", from, to, label);
         
-        create_edge.write(CreateEdgeVisual {
+        create_edge.send(CreateEdgeVisual {
             edge_id: EdgeId::new(),
             source_node_id: node_ids[from],
             target_node_id: node_ids[to],
@@ -143,6 +199,7 @@ fn create_workflow(
         });
     }
     
+    demo.workflow_state = WorkflowState::Running;
     println!("\n=== Workflow Created Successfully ===\n");
 }
 
@@ -150,6 +207,8 @@ fn handle_node_creation(
     mut commands: Commands,
     mut create_events: EventReader<CreateNodeVisual>,
     mut node_map: ResMut<NodeEntityMap>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     demo: Res<WorkflowDemo>,
 ) {
     for event in create_events.read() {
@@ -161,14 +220,37 @@ fn handle_node_creation(
             _ => WorkflowNodeType::Task,
         };
 
+        let state = demo.node_states.get(&event.node_id).copied().unwrap_or(NodeState::Pending);
+        
+        // Create visual representation
+        let mesh = match node_type {
+            WorkflowNodeType::Start | WorkflowNodeType::End => {
+                meshes.add(Sphere::new(0.5))
+            }
+            WorkflowNodeType::Decision => {
+                meshes.add(Cuboid::new(1.0, 1.0, 1.0))
+            }
+            WorkflowNodeType::Task => {
+                meshes.add(Cylinder::new(0.5, 0.8))
+            }
+        };
+
+        let material = materials.add(StandardMaterial {
+            base_color: get_color_for_state(state),
+            ..default()
+        });
+
         let entity = commands
             .spawn((
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
                 NodeVisualBundle::new(event.node_id, demo.graph_id, event.position),
                 WorkflowNode {
                     node_type,
-                    state: NodeState::Pending,
+                    state,
                     label: event.label.clone(),
                 },
+                NodeMaterial { state },
             ))
             .id();
 
@@ -181,6 +263,8 @@ fn handle_node_creation(
 fn handle_edge_creation(
     mut commands: Commands,
     mut create_events: EventReader<CreateEdgeVisual>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     node_map: Res<NodeEntityMap>,
     demo: Res<WorkflowDemo>,
 ) {
@@ -194,7 +278,16 @@ fn handle_edge_creation(
                 _ => "connects".to_string(),
             };
             
+            // Create a simple line mesh (placeholder - in real implementation, use gizmos or custom mesh)
+            let mesh = meshes.add(Cuboid::new(0.1, 0.1, 1.0));
+            let material = materials.add(StandardMaterial {
+                base_color: Color::srgb(0.5, 0.5, 0.5),
+                ..default()
+            });
+            
             commands.spawn((
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
                 EdgeVisualBundle::new(event.edge_id, demo.graph_id, source_entity, target_entity),
                 EdgeLine { label: label.clone() },
             ));
@@ -204,31 +297,94 @@ fn handle_edge_creation(
     }
 }
 
-fn print_workflow_status(
-    demo: Res<WorkflowDemo>,
-    nodes: Query<&WorkflowNode>,
-    edges: Query<&EdgeLine>,
-    mut frame_count: Local<u32>,
+fn animate_workflow(
+    time: Res<Time>,
+    mut demo: ResMut<WorkflowDemo>,
+    mut node_query: Query<(&WorkflowNode, &mut NodeMaterial)>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    material_query: Query<&MeshMaterial3d<StandardMaterial>>,
 ) {
-    *frame_count += 1;
+    demo.animation_timer.tick(time.delta());
     
-    // Print status every 60 frames (approximately once per second at 60 FPS)
-    if *frame_count % 60 == 0 {
-        let node_count = nodes.iter().count();
-        let edge_count = edges.iter().count();
+    if demo.animation_timer.just_finished() && demo.workflow_state == WorkflowState::Running {
+        // Progress through workflow steps
+        let steps = vec![
+            ("Submit Document", NodeState::Active),
+            ("Submit Document", NodeState::Completed),
+            ("Review", NodeState::Active),
+            ("Review", NodeState::Completed),
+            ("Approval Decision", NodeState::Active),
+            ("Approved", NodeState::Active),
+        ];
         
-        if node_count > 0 || edge_count > 0 {
-            println!("\n--- Workflow Status (Frame {}) ---", *frame_count);
-            println!("State: {:?}", demo.workflow_state);
-            println!("Nodes: {}", node_count);
-            println!("Edges: {}", edge_count);
+        if demo.current_step < steps.len() {
+            let (label, new_state) = steps[demo.current_step];
             
-            if node_count > 0 {
-                println!("\nNodes in workflow:");
-                for node in nodes.iter() {
-                    println!("  - {} ({:?}, {:?})", node.label, node.node_type, node.state);
+            // Update node state
+            for (node, mut node_material) in node_query.iter_mut() {
+                if node.label == label {
+                    node_material.state = new_state;
+                    println!("Updated {} to {:?}", label, new_state);
+                }
+            }
+            
+            demo.current_step += 1;
+            
+            if demo.current_step >= steps.len() {
+                demo.workflow_state = WorkflowState::Completed;
+                println!("\n🎉 Workflow completed!");
+            }
+        }
+    }
+}
+
+fn update_node_visuals(
+    demo: Res<WorkflowDemo>,
+    node_query: Query<(&NodeVisual, &NodeMaterial, &MeshMaterial3d<StandardMaterial>)>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for (node_visual, node_material, material_handle) in node_query.iter() {
+        if let Some(&state) = demo.node_states.get(&node_visual.node_id) {
+            if state != node_material.state {
+                if let Some(material) = materials.get_mut(&material_handle.0) {
+                    material.base_color = get_color_for_state(state);
                 }
             }
         }
+    }
+}
+
+fn handle_input(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut demo: ResMut<WorkflowDemo>,
+) {
+    if keyboard.just_pressed(KeyCode::Space) {
+        match demo.workflow_state {
+            WorkflowState::NotStarted => {
+                demo.workflow_state = WorkflowState::Running;
+                println!("Workflow started!");
+            }
+            WorkflowState::Completed => {
+                demo.workflow_state = WorkflowState::Running;
+                demo.current_step = 0;
+                println!("Workflow restarted!");
+            }
+            _ => {}
+        }
+    }
+    
+    if keyboard.just_pressed(KeyCode::KeyR) {
+        demo.current_step = 0;
+        demo.workflow_state = WorkflowState::NotStarted;
+        println!("Workflow reset!");
+    }
+}
+
+fn get_color_for_state(state: NodeState) -> Color {
+    match state {
+        NodeState::Pending => Color::srgb(0.5, 0.5, 0.5),
+        NodeState::Active => Color::srgb(1.0, 0.8, 0.0),
+        NodeState::Completed => Color::srgb(0.0, 0.8, 0.0),
+        NodeState::Failed => Color::srgb(0.8, 0.0, 0.0),
     }
 }

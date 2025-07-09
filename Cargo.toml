@@ -13,6 +13,22 @@ bevy = { path = "../bevy-patched", default-features = false, features = [
     "bevy_log",
     "bevy_color",
     "bevy_render",
+    "bevy_pbr",
+    "bevy_gizmos",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_window",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_sprite",
+    "bevy_asset",
+    "bevy_scene",
+    "default_font",
+    "png",
+    "x11",
+    "wayland",
+    "multi_threaded",
+    "tonemapping_luts",   # Added to fix shader compilation
 ] }
 
 # Serialization
@@ -22,6 +38,9 @@ serde_json = "1.0"
 # Math and utilities
 uuid = { version = "1.11", features = ["v4", "serde"] }
 petgraph = "0.6"
+
+# Date/time for event timestamps
+chrono = "0.4"
 
 # Async for event handling
 tokio = { version = "1.42", features = ["sync"] }
@@ -55,3 +74,23 @@ path = "examples/workflow_demo.rs"
 [[example]]
 name = "usage_example"
 path = "examples/usage_example.rs"
+
+[[example]]
+name = "workflow_demo_minimal"
+path = "examples/workflow_demo_minimal.rs"
+
+[[example]]
+name = "workflow_demo_visual"
+path = "examples/workflow_demo_visual.rs"
+
+[[example]]
+name = "workflow_demo_with_camera"
+path = "examples/workflow_demo_with_camera.rs"
+
+[[example]]
+name = "workflow_demo_with_ui"
+path = "examples/workflow_demo_with_ui.rs"
+
+[[example]]
+name = "workflow_event_stream_demo"
+path = "examples/workflow_event_stream_demo.rs"

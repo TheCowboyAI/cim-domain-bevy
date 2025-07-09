@@ -30,6 +30,8 @@ impl Plugin for CimVizPlugin {
             .add_event::<RemoveNodeVisual>()
             .add_event::<CreateEdgeVisual>()
             .add_event::<RemoveEdgeVisual>()
+            .add_event::<VisualNodeCreated>()
+            .add_event::<VisualEdgeCreated>()
             .add_event::<NodeClicked>()
             .add_event::<NodeHovered>()
             .add_event::<NodeUnhovered>()
@@ -43,7 +45,17 @@ impl Plugin for CimVizPlugin {
             .add_event::<VisualizationCommand>();
 
         // Add resources
-        app.insert_resource(AsyncSyncBridge::new(1000));
+        app.insert_resource(AsyncSyncBridge::new(self.channel_size))
+            .insert_resource(ActiveGraph::default())
+            .insert_resource(Selection::default())
+            .insert_resource(VisualizationConfig::default())
+            .insert_resource(GraphLayoutConfig::default())
+            .insert_resource(CameraState::default())
+            .insert_resource(PerformanceMetrics::default())
+            .insert_resource(GraphBounds::default())
+            .insert_resource(ThemeConfig::default())
+            .insert_resource(SpatialIndex::default())
+            .insert_resource(InteractionState::default());
 
         // Add bridge systems
         app.add_systems(
