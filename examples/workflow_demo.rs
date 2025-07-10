@@ -140,7 +140,7 @@ fn create_workflow(
     demo.animation_timer = Timer::from_seconds(2.0, TimerMode::Repeating);
     
     println!("\n=== Creating Document Approval Workflow ===");
-    
+
     // Define workflow nodes
     let nodes = vec![
         ("Start", WorkflowNodeType::Start, Vec3::new(-8.0, 0.0, 0.0)),
@@ -168,7 +168,7 @@ fn create_workflow(
         demo.node_states.insert(node_id, initial_state);
 
         println!("Creating node: {} ({:?})", name, node_type);
-        
+
         create_node.send(CreateNodeVisual {
             node_id,
             position,
@@ -365,13 +365,13 @@ fn handle_input(
                 println!("Workflow started!");
             }
             WorkflowState::Completed => {
-                demo.workflow_state = WorkflowState::Running;
+                                demo.workflow_state = WorkflowState::Running;
                 demo.current_step = 0;
                 println!("Workflow restarted!");
-            }
-            _ => {}
-        }
-    }
+                            }
+                            _ => {}
+                        }
+                    }
     
     if keyboard.just_pressed(KeyCode::KeyR) {
         demo.current_step = 0;

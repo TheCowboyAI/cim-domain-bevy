@@ -8,8 +8,8 @@ edition = "2021"
 cim-contextgraph = { path = "../cim-contextgraph" }
 cim-domain = { path = "../cim-domain" }
 
-# Bevy for visualization - use workspace patched version
-bevy = { path = "../bevy-patched", default-features = false, features = [
+# Bevy for visualization
+bevy = { version = "0.16.1", default-features = false, features = [
     "bevy_log",
     "bevy_color",
     "bevy_render",
