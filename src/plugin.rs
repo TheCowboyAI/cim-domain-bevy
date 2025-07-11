@@ -76,6 +76,31 @@ impl Plugin for CimVizPlugin {
                 crate::morphisms::remove_edge_visual,
             ),
         );
+        
+        // Add layout systems
+        app.insert_resource(crate::layout::GraphLayoutState::default())
+            .add_event::<crate::layout::SetLayoutAlgorithm>()
+            .add_systems(
+                Update,
+                (
+                    crate::layout::update_layout_from_hints,
+                    crate::layout::apply_layout_algorithm,
+                    crate::layout::handle_layout_commands,
+                ),
+            );
+            
+        // Add edge state systems
+        app.add_event::<crate::edge_systems::EdgeStateChanged>()
+            .add_systems(
+                Update,
+                (
+                    crate::edge_systems::update_edge_visualization,
+                    crate::edge_systems::highlight_connected_edges,
+                    crate::edge_systems::update_edge_weights,
+                    crate::edge_systems::handle_edge_state_changes,
+                    crate::edge_systems::animate_edge_flow,
+                ),
+            );
 
 
     }

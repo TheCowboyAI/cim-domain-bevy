@@ -9,11 +9,14 @@
 
 pub mod bridge;
 pub mod components;
+pub mod edge_systems;
 pub mod events;
 pub mod functors;
+pub mod layout;
 pub mod morphisms;
 pub mod plugin;
 pub mod resources;
+pub mod visualization;
 
 // Re-export commonly used types
 pub use components::*;

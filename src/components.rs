@@ -116,6 +116,7 @@ impl NodeVisualBundle {
 #[derive(Bundle)]
 pub struct EdgeVisualBundle {
     pub edge: EdgeVisual,
+    pub edge_state: EdgeState,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
     pub visibility: Visibility,
@@ -137,6 +138,7 @@ impl EdgeVisualBundle {
                 source_entity,
                 target_entity,
             },
+            edge_state: EdgeState::default(),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
             visibility: Visibility::default(),
@@ -216,6 +218,34 @@ impl Default for EdgeStyle {
             dashed: false,
         }
     }
+}
+
+/// Edge state for tracking various edge conditions
+#[derive(Component, Debug, Clone)]
+pub struct EdgeState {
+    pub is_active: bool,
+    pub is_highlighted: bool,
+    pub weight: f32,
+    pub flow_direction: FlowDirection,
+}
+
+impl Default for EdgeState {
+    fn default() -> Self {
+        Self {
+            is_active: true,
+            is_highlighted: false,
+            weight: 1.0,
+            flow_direction: FlowDirection::Forward,
+        }
+    }
+}
+
+/// Flow direction for edges
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum FlowDirection {
+    Forward,
+    Backward,
+    Bidirectional,
 }
 
 /// Edge curve types
