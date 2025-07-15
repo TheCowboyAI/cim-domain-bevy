@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use crate::components::{NodeVisual, EdgeVisual};
 use crate::resources::{GraphLayoutConfig, ActiveGraph};
 use crate::visualization::{LayoutType, VisualizationHints};
-use cim_contextgraph::{ContextGraphId as GraphId, NodeId};
+use cim_contextgraph::ContextGraphId as GraphId;
 use std::collections::HashMap;
 
 /// Resource to track the current layout algorithm for each graph

@@ -199,7 +199,7 @@ pub enum NodeShape {
 }
 
 /// Visual style for edges
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeStyle {
     pub curve_type: EdgeCurveType,
     pub thickness: f32,

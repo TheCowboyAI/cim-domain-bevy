@@ -43,8 +43,11 @@ petgraph = "0.6"
 chrono = "0.4"
 
 # Async for event handling
-tokio = { version = "1.42", features = ["sync"] }
+tokio = { version = "1.42", features = ["sync", "rt"] }
 crossbeam-channel = "0.5"
+async-nats = "0.38"
+futures = "0.3"
+parking_lot = "0.12"
 
 # Error handling
 thiserror = "2.0"
@@ -54,10 +57,14 @@ anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
+# Random for initial positions
+rand = "0.8"
+
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.6"
 rand = "0.8"
+tokio = { version = "1.42", features = ["full"] }
 
 [[example]]
 name = "visual_demo"
@@ -70,6 +77,14 @@ path = "examples/simple_demo.rs"
 [[example]]
 name = "workflow_demo"
 path = "examples/workflow_demo.rs"
+
+[[example]]
+name = "nats_event_visualization_demo"
+path = "examples/nats_event_visualization_demo.rs"
+
+[[example]]
+name = "nats_event_visualization_with_ui"
+path = "examples/nats_event_visualization_with_ui.rs"
 
 [[example]]
 name = "usage_example"
@@ -94,3 +109,7 @@ path = "examples/workflow_demo_with_ui.rs"
 [[example]]
 name = "workflow_event_stream_demo"
 path = "examples/workflow_event_stream_demo.rs"
+
+[[example]]
+name = "simulate_domain_events"
+path = "examples/simulate_domain_events.rs"

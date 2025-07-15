@@ -14,6 +14,8 @@ pub mod events;
 pub mod functors;
 pub mod layout;
 pub mod morphisms;
+pub mod nats_event_visualization;
+pub mod nats_event_visualization_ui;
 pub mod plugin;
 pub mod resources;
 pub mod visualization;
@@ -29,3 +31,7 @@ pub use bridge::{AsyncSyncBridge, BridgeError};
 
 // Re-export functor types
 pub use functors::{DomainToVisualFunctor, VisualToDomainFunctor};
+
+// Re-export NATS event visualization
+pub use nats_event_visualization::{NatsEventVisualizationPlugin, DomainEventReceived, EventVisualizationCommand};
+pub use nats_event_visualization_ui::{EventVisualizationUIPlugin, EventFilters, EventStatistics};

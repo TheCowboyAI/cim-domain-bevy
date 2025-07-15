@@ -1,6 +1,6 @@
 //! Visualization support for ContextGraphs
 
-use crate::types::{NodeId, EdgeId};
+use cim_contextgraph::{NodeId, EdgeId};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
