@@ -9,12 +9,15 @@
 
 pub mod bridge;
 pub mod components;
+// pub mod deployment_visualization; // Disabled: depends on non-existent cim-domain-graph
 pub mod edge_systems;
 pub mod events;
 pub mod functors;
 pub mod layout;
 pub mod morphisms;
+pub mod nats_component_bridge;
 pub mod nats_event_visualization;
+pub mod nats_event_filter_ui;
 pub mod nats_event_visualization_ui;
 pub mod plugin;
 pub mod resources;
@@ -35,3 +38,10 @@ pub use functors::{DomainToVisualFunctor, VisualToDomainFunctor};
 // Re-export NATS event visualization
 pub use nats_event_visualization::{NatsEventVisualizationPlugin, DomainEventReceived, EventVisualizationCommand};
 pub use nats_event_visualization_ui::{EventVisualizationUIPlugin, EventFilters, EventStatistics};
+pub use nats_event_filter_ui::{NatsEventFilterUIPlugin, EventFilterState, TimeRange};
+
+// Re-export NATS component bridge for isomorphic architecture
+pub use nats_component_bridge::{
+    NatsComponentBridge, NatsComponentPlugin, NatsSyncedEntity, PendingComponentUpdate,
+    process_nats_component_events, apply_component_updates,
+};

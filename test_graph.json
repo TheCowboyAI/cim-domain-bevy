@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "id": "node1",
+      "label": "Domain A",
+      "position": [0.0, 0.0, 0.0],
+      "color": [0.8, 0.2, 0.2, 1.0],
+      "size": 1.0
+    },
+    {
+      "id": "node2", 
+      "label": "Domain B",
+      "position": [5.0, 0.0, 0.0],
+      "color": [0.2, 0.8, 0.2, 1.0],
+      "size": 1.0
+    },
+    {
+      "id": "node3",
+      "label": "Domain C", 
+      "position": [2.5, 4.0, 0.0],
+      "color": [0.2, 0.2, 0.8, 1.0],
+      "size": 1.0
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge1",
+      "source_id": "node1",
+      "target_id": "node2",
+      "label": "connects to",
+      "weight": 1.0
+    },
+    {
+      "id": "edge2",
+      "source_id": "node2",
+      "target_id": "node3",
+      "label": "depends on",
+      "weight": 1.0
+    },
+    {
+      "id": "edge3",
+      "source_id": "node3",
+      "target_id": "node1",
+      "label": "references",
+      "weight": 1.0
+    }
+  ]
+}

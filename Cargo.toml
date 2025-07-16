@@ -113,3 +113,7 @@ path = "examples/workflow_event_stream_demo.rs"
 [[example]]
 name = "simulate_domain_events"
 path = "examples/simulate_domain_events.rs"
+
+[[example]]
+name = "nats_component_sync_demo"
+path = "examples/nats_component_sync_demo.rs"
