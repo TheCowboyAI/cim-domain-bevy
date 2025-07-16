@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 # Core dependencies
 cim-contextgraph = { path = "../cim-contextgraph" }
-cim-domain = { path = "../cim-domain" }
+cim-domain = { git = "https://github.com/TheCowboyAI/cim-domain.git", branch = "main" }
 
 # Bevy for visualization
 bevy = { version = "0.16.1", default-features = false, features = [
